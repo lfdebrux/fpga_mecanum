@@ -21,10 +21,10 @@ module servo_read #(
   const TOP = (CLOCK_FREQ/1000000) * PERIOD;
   // Min/max offsets
   const MIN_MAX = (CLOCK_FREQ/1000000) * MIN_MAX_DIFF;
-  // Amount to shift input by to get close to MIN_MAX range
+  // Amount to shift output by to get within resolution
   const SHIFT = $clog2(MIN_MAX*2) - RESOLUTION;
   // Offset to get a pulse centered around CENTER_WIDTH
-  const OFFSET = (CLOCK_FREQ/1000000) * CENTER_WIDTH - $pow(2,RESOLUTION+SHIFT-1);
+  const OFFSET = (CLOCK_FREQ/1000000) * CENTER_WIDTH;
   
   .clk(clk) {
     fsm state = {IDLE, UP, DOWN};
