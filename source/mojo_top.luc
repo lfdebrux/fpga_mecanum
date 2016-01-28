@@ -38,12 +38,12 @@ module mojo_top (
     spi_channel = bzzzz;    // not using flags
     avr_rx = bz;            // not using serial port
     
-    pos = servo.position >> 5;
+    pos = $signed(servo.position) >>> 5 + 3;
     
     for (i = 0; i < 7; i++) {
       led[i] = 0;
       
-      if (pos > $signed(i))
+      if (pos > i)
         led[i] = 1;
     }
     
