@@ -1,0 +1,1 @@
+NET "signal" LOC = P98 | IOSTANDARD = LVTTL;

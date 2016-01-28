@@ -1,0 +1,68 @@
+module servo_read #(
+    // Clock frequency (Hz)
+    CLOCK_FREQ = 50000000 : CLOCK_FREQ > 0,   
+    // How much the pulse width can change (us)                 
+    MIN_MAX_DIFF = 500    : MIN_MAX_DIFF > 0,   
+    // Neutral pulse width (us)                 
+    CENTER_WIDTH = 1500   : CENTER_WIDTH > MIN_MAX_DIFF,
+    // PWM period (us)
+    PERIOD = 20000        : PERIOD > MIN_MAX_DIFF + CENTER_WIDTH,
+    // Number of bits used to set the position
+    RESOLUTION = 8        : RESOLUTION <= $clog2((CLOCK_FREQ/1000000)*(2*MIN_MAX_DIFF))
+                            && RESOLUTION > 0
+  )(
+    input clk,  // clock
+    input rst,  // reset
+    input servo,
+    output position[RESOLUTION]
+  ) {
+  
+  // Max value of counter
+  const TOP = (CLOCK_FREQ/1000000) * PERIOD;
+  // Min/max offsets
+  const MIN_MAX = (CLOCK_FREQ/1000000) * MIN_MAX_DIFF;
+  // Amount to shift input by to get close to MIN_MAX range
+  const SHIFT = $clog2(MIN_MAX*2) - RESOLUTION;
+  // Offset to get a pulse centered around CENTER_WIDTH
+  const OFFSET = (CLOCK_FREQ/1000000) * CENTER_WIDTH - $pow(2,RESOLUTION+SHIFT-1);
+  
+  .clk(clk) {
+    fsm state = {IDLE, UP, DOWN};
+    .in(servo) {
+      edge_detector rise(#RISE(1));
+      edge_detector fall(#FALL(1));
+    }
+    .rst(rst) {
+      dff pos[RESOLUTION];    // buffer for output
+      dff ctr[$clog2(TOP)];   // counter for PWM
+    }
+  }
+
+  always {
+    position = 0;
+    
+    case (state.q) {
+    
+      state.UP:
+        if (fall.out == 1) {
+          state.d = state.DOWN;
+          pos.d = (ctr.q - OFFSET) >> SHIFT;
+        }
+        ctr.d = ctr.q + 1;
+        
+      state.DOWN:
+        if (rise.out == 1) {
+          state.d = state.UP;
+          ctr.d = 0; // reset counter
+        }
+      
+      default:
+        // if in weird state, wait for a fall
+        if (fall.out == 1) {
+          state.d = state.DOWN;
+        }
+    }
+    
+    position = pos.q;
+  }
+}
