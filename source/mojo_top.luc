@@ -11,7 +11,7 @@ module mojo_top (
     input avr_tx,           // AVR TX (FPGA RX)
     output avr_rx,          // AVR RX (FPGA TX)
     input avr_rx_busy,      // AVR RX buffer full
-    input signal[2]         // servo signal
+    input signal[4]         // servo signal
   ) {
   
   sig rst;                  // reset signal
@@ -20,15 +20,21 @@ module mojo_top (
     // The reset conditioner is used to synchronize the reset signal to the FPGA
     // clock. This ensures the entire FPGA comes out of reset at the same time.
     reset_conditioner reset_cond;
-    pipeline sync[2] (#DEPTH(2));
+    pipeline sync[4] (#DEPTH(2));
 
     .rst(rst) {
-      servo_read servo1;
-      servo_read servo2;
+      servo_read forwd;
+      servo_read sidew;
+      servo_read rotat;
+      servo_read throt;
       pwm led_pwm1;
       pwm led_pwm2;
+      pwm led_pwm3;
+      pwm led_pwm4;
     }
   }
+  
+  sig mot[4][16];
   
   always {
     reset_cond.in = ~rst_n; // input raw inverted reset signal
@@ -41,18 +47,34 @@ module mojo_top (
     
     sync.in = signal;
     
-    servo1.servo = sync.out[0];
-    servo2.servo = sync.out[1];
+    forwd.servo = sync.out[0];
+    sidew.servo = sync.out[1];
+    rotat.servo = sync.out[2];
+    throt.servo = sync.out[3];
     
-    led_pwm1.value = $signed(servo1.position) + 4;
-    led_pwm2.value = $signed(servo2.position) + 4;
+    
+    mot[0] = sidew.position + forwd.position + rotat.position;
+    mot[1] = sidew.position - forwd.position - rotat.position;
+    mot[2] = sidew.position - forwd.position + rotat.position;
+    mot[3] = sidew.position + forwd.position - rotat.position;
+    
+    led_pwm1.value = $signed(mot[0]) + 4;
+    led_pwm2.value = $signed(mot[1]) + 4;
+    led_pwm3.value = $signed(mot[2]) + 4;
+    led_pwm4.value = $signed(mot[3]) + 4;
     
     led[0] = led_pwm1.pulse;
     led[1] = led_pwm2.pulse;
+    led[2] = led_pwm3.pulse;
+    led[3] = led_pwm4.pulse;
     led_pwm1.update = 1;
     led_pwm2.update = 1;
+    led_pwm3.update = 1;
+    led_pwm4.update = 1;
     
-    led[6] = signal[0];
-    led[7] = signal[1];
+    led[4] = signal[0];
+    led[5] = signal[1];
+    led[6] = signal[2];
+    led[7] = signal[3];
   }
 }
