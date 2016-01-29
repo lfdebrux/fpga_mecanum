@@ -20,6 +20,7 @@ module mojo_top (
     // The reset conditioner is used to synchronize the reset signal to the FPGA
     // clock. This ensures the entire FPGA comes out of reset at the same time.
     reset_conditioner reset_cond;
+    pipeline sync(#DEPTH(2));
 
     .rst(rst) {
       servo_read servo;
@@ -38,7 +39,10 @@ module mojo_top (
     spi_channel = bzzzz;    // not using flags
     avr_rx = bz;            // not using serial port
     
-    pos = $signed(servo.position) >>> 5 + 3;
+    sync.in = signal;
+    servo.servo = sync.out;
+    
+    pos = ($signed(servo.position) >>> 5) + 1;
     
     for (i = 0; i < 7; i++) {
       led[i] = 0;
@@ -48,7 +52,5 @@ module mojo_top (
     }
     
     led[7] = signal;
-    
-    servo.servo = signal;
   }
 }
