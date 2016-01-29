@@ -24,11 +24,9 @@ module mojo_top (
 
     .rst(rst) {
       servo_read servo;
+      pwm led_pwm;
     }
   }
-  
-  var i;
-  sig pos[3];
   
   always {
     reset_cond.in = ~rst_n; // input raw inverted reset signal
@@ -42,14 +40,9 @@ module mojo_top (
     sync.in = signal;
     servo.servo = sync.out;
     
-    pos = ($signed(servo.position) >>> 5) + 1;
+    led_pwm.compare = $signed(servo.position) + 4;
     
-    for (i = 0; i < 7; i++) {
-      led[i] = 0;
-      
-      if (pos > i)
-        led[i] = 1;
-    }
+    led[0] =led_pwm.pwm;
     
     led[7] = signal;
   }
