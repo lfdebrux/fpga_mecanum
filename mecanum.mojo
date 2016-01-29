@@ -3,9 +3,9 @@
   <files>
     <src>servo_read.luc</src>
     <src top="true">mojo_top.luc</src>
-    <src>pwm.v</src>
     <ucf>servos.ucf</ucf>
     <ucf lib="true">mojo.ucf</ucf>
+    <component>pwm.luc</component>
     <component>reset_conditioner.luc</component>
     <component>pipeline.luc</component>
     <component>servo.luc</component>

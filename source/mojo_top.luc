@@ -11,7 +11,7 @@ module mojo_top (
     input avr_tx,           // AVR TX (FPGA RX)
     output avr_rx,          // AVR RX (FPGA TX)
     input avr_rx_busy,      // AVR RX buffer full
-    input signal            // servo signal
+    input signal[2]         // servo signal
   ) {
   
   sig rst;                  // reset signal
@@ -20,11 +20,13 @@ module mojo_top (
     // The reset conditioner is used to synchronize the reset signal to the FPGA
     // clock. This ensures the entire FPGA comes out of reset at the same time.
     reset_conditioner reset_cond;
-    pipeline sync(#DEPTH(2));
+    pipeline sync[2] (#DEPTH(2));
 
     .rst(rst) {
-      servo_read servo;
-      pwm led_pwm;
+      servo_read servo1;
+      servo_read servo2;
+      pwm led_pwm1;
+      pwm led_pwm2;
     }
   }
   
@@ -38,12 +40,19 @@ module mojo_top (
     avr_rx = bz;            // not using serial port
     
     sync.in = signal;
-    servo.servo = sync.out;
     
-    led_pwm.compare = $signed(servo.position) + 4;
+    servo1.servo = sync.out[0];
+    servo2.servo = sync.out[1];
     
-    led[0] =led_pwm.pwm;
+    led_pwm1.value = $signed(servo1.position) + 4;
+    led_pwm2.value = $signed(servo2.position) + 4;
     
-    led[7] = signal;
+    led[0] = led_pwm1.pulse;
+    led[1] = led_pwm2.pulse;
+    led_pwm1.update = 1;
+    led_pwm2.update = 1;
+    
+    led[6] = signal[0];
+    led[7] = signal[1];
   }
 }
