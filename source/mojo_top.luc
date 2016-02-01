@@ -11,7 +11,8 @@ module mojo_top (
     input avr_tx,           // AVR TX (FPGA RX)
     output avr_rx,          // AVR RX (FPGA TX)
     input avr_rx_busy,      // AVR RX buffer full
-    input signal[4]         // servo signal
+    input signal[4],        // servo signal
+    output motor[4]
   ) {
   
   sig rst;                  // reset signal
@@ -31,6 +32,10 @@ module mojo_top (
       pwm led_pwm2;
       pwm led_pwm3;
       pwm led_pwm4;
+      servo motor1 (#RESOLUTION(16));
+      servo motor2 (#RESOLUTION(16));
+      servo motor3 (#RESOLUTION(16));
+      servo motor4 (#RESOLUTION(16));
     }
   }
   
@@ -52,11 +57,10 @@ module mojo_top (
     rotat.servo = sync.out[2];
     throt.servo = sync.out[3];
     
-    
-    mot[0] = sidew.position + forwd.position + rotat.position;
-    mot[1] = sidew.position - forwd.position - rotat.position;
-    mot[2] = sidew.position - forwd.position + rotat.position;
-    mot[3] = sidew.position + forwd.position - rotat.position;
+    mot[0] = forwd.position + sidew.position + rotat.position;
+    mot[1] = forwd.position - sidew.position - rotat.position;
+    mot[2] = forwd.position - sidew.position + rotat.position;
+    mot[3] = forwd.position + sidew.position - rotat.position;
     
     led_pwm1.value = $signed(mot[0]) + 4;
     led_pwm2.value = $signed(mot[1]) + 4;
@@ -76,5 +80,15 @@ module mojo_top (
     led[5] = signal[1];
     led[6] = signal[2];
     led[7] = signal[3];
+    
+    motor1.position = mot[0];
+    motor2.position = mot[1];
+    motor3.position = mot[2];
+    motor4.position = mot[3];
+    
+    motor[0] = motor1.servo;
+    motor[1] = motor2.servo;
+    motor[2] = motor3.servo;
+    motor[3] = motor4.servo;
   }
 }
