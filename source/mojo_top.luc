@@ -2,18 +2,11 @@ module mojo_top (
     input clk,              // 50MHz clock
     input rst_n,            // reset button (active low)
     output led [8],         // 8 user controllable LEDs
-    input cclk,             // configuration clock, AVR ready when high
     output spi_miso,        // AVR SPI MISO
-    input spi_ss,           // AVR SPI Slave Select
-    input spi_mosi,         // AVR SPI MOSI
-    input spi_sck,          // AVR SPI Clock
     output spi_channel [4], // AVR general purpose pins (used by default to select ADC channel)
-    input avr_tx,           // AVR TX (FPGA RX)
     output avr_rx,          // AVR RX (FPGA TX)
-    input avr_rx_busy,      // AVR RX buffer full
-    input signal[4],        // servo signal
-    output motor[4],
-    output debug[4]
+    input pwm_in[4],        // servo signal
+    output pwm_out[4]
   ) {
   
   sig rst;                  // reset signal
@@ -40,8 +33,6 @@ module mojo_top (
     }
   }
   
-  sig mot[4][16];
-  
   always {
     reset_cond.in = ~rst_n; // input raw inverted reset signal
     rst = reset_cond.out;   // conditioned reset
@@ -54,49 +45,23 @@ module mojo_top (
     motor = 4h00;
     debug = 4h00;
     
-    sync.in = signal;
-    
+    // inputs
+    sync.in = pwm_in;
+    led[7:4] = pwm_in;
+
+    // outputs
+    pwm_out = c{motor1.servo, motor2.servo, motor3.servo, motor4.servo};
+    debug = c{motor1.servo, motor2.servo, motor3.servo, motor4.servo};
+
+    //logic
     forwd.servo = sync.out[0];
     sidew.servo = sync.out[1];
     rotat.servo = sync.out[2];
     throt.servo = sync.out[3];
     
-    mot[0] = forwd.position + sidew.position + rotat.position;
-    mot[1] = forwd.position - sidew.position - rotat.position;
-    mot[2] = forwd.position - sidew.position + rotat.position;
-    mot[3] = forwd.position + sidew.position - rotat.position;
-    
-    //debug_pwm1.value = mot[0];
-    //debug_pwm2.value = mot[1];
-    //debug_pwm3.value = mot[2];
-    //debug_pwm4.value = mot[3];
-    //debug[0] = debug_pwm1.pulse;
-    //debug[1] = debug_pwm2.pulse;
-    //debug[2] = debug_pwm3.pulse;
-    //debug[3] = debug_pwm4.pulse;
-    //debug_pwm1.update = 1;
-    //debug_pwm2.update = 1;
-    //debug_pwm3.update = 1;
-    //debug_pwm4.update = 1;
-    
-    led[4] = signal[0];
-    led[5] = signal[1];
-    led[6] = signal[2];
-    led[7] = signal[3];
-    
-    motor1.position = mot[0];
-    motor2.position = mot[1];
-    motor3.position = mot[2];
-    motor4.position = mot[3];
-    
-    motor[0] = motor1.servo;
-    motor[1] = motor2.servo;
-    motor[2] = motor3.servo;
-    motor[3] = motor4.servo;
-    
-    debug[0] = motor1.servo;
-    debug[1] = motor2.servo;
-    debug[2] = motor3.servo;
-    debug[3] = motor4.servo;
+    motor1.position = forwd.position + sidew.position + rotat.position;
+    motor2.position = forwd.position - sidew.position - rotat.position;
+    motor3.position = forwd.position - sidew.position + rotat.position;
+    motor4.position = forwd.position + sidew.position - rotat.position;
   }
 }
