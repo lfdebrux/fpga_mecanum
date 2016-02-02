@@ -6,7 +6,8 @@ module mojo_top (
     output spi_channel [4], // AVR general purpose pins (used by default to select ADC channel)
     output avr_rx,          // AVR RX (FPGA TX)
     input pwm_in[4],        // servo signal
-    output pwm_out[4]
+    output pwm_out[4],
+    output debug[4]
   ) {
   
   sig rst;                  // reset signal
@@ -42,7 +43,7 @@ module mojo_top (
     spi_channel = bzzzz;    // not using flags
     avr_rx = bz;            // not using serial port
     
-    motor = 4h00;
+    pwm_out = 4h00;
     debug = 4h00;
     
     // inputs
