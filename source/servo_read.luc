@@ -27,7 +27,7 @@ module servo_read #(
   const OFFSET = (CLOCK_FREQ/1000000) * CENTER_WIDTH;
   
   .clk(clk) {
-    fsm state = {IDLE, UP, DOWN};
+    fsm state(#INIT(DOWN)) = {UP, DOWN};
     .in(servo) {
       edge_detector rise(#RISE(1));
       edge_detector fall(#FALL(1));
@@ -44,23 +44,16 @@ module servo_read #(
     case (state.q) {
     
       state.UP:
+        ctr.d = ctr.q + 1;
         if (fall.out == 1) {
           state.d = state.DOWN;
-          pos.d = (ctr.q - OFFSET) >> SHIFT;
+          pos.d = $signed(ctr.q - OFFSET) >>> SHIFT;
         }
-        ctr.d = ctr.q + 1;
         
       state.DOWN:
-        if (rise.out == 1) {
+        if (rise.out == 1)
           state.d = state.UP;
-          ctr.d = 0; // reset counter
-        }
-      
-      default:
-        // if in weird state, wait for a fall
-        if (fall.out == 1) {
-          state.d = state.DOWN;
-        }
+        ctr.d = 0; // reset counter
     }
     
     position = pos.q;

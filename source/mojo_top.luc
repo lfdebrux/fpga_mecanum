@@ -12,7 +12,8 @@ module mojo_top (
     output avr_rx,          // AVR RX (FPGA TX)
     input avr_rx_busy,      // AVR RX buffer full
     input signal[4],        // servo signal
-    output motor[4]
+    output motor[4],
+    output debug[4]
   ) {
   
   sig rst;                  // reset signal
@@ -28,10 +29,10 @@ module mojo_top (
       servo_read sidew;
       servo_read rotat;
       servo_read throt;
-      pwm led_pwm1;
-      pwm led_pwm2;
-      pwm led_pwm3;
-      pwm led_pwm4;
+      //pwm debug_pwm1 (#WIDTH(16));
+      //pwm debug_pwm2 (#WIDTH(16));
+      //pwm debug_pwm3 (#WIDTH(16));
+      //pwm debug_pwm4 (#WIDTH(16));
       servo motor1 (#RESOLUTION(16));
       servo motor2 (#RESOLUTION(16));
       servo motor3 (#RESOLUTION(16));
@@ -50,6 +51,9 @@ module mojo_top (
     spi_channel = bzzzz;    // not using flags
     avr_rx = bz;            // not using serial port
     
+    motor = 4h00;
+    debug = 4h00;
+    
     sync.in = signal;
     
     forwd.servo = sync.out[0];
@@ -62,19 +66,18 @@ module mojo_top (
     mot[2] = forwd.position - sidew.position + rotat.position;
     mot[3] = forwd.position + sidew.position - rotat.position;
     
-    led_pwm1.value = $signed(mot[0]) + 4;
-    led_pwm2.value = $signed(mot[1]) + 4;
-    led_pwm3.value = $signed(mot[2]) + 4;
-    led_pwm4.value = $signed(mot[3]) + 4;
-    
-    led[0] = led_pwm1.pulse;
-    led[1] = led_pwm2.pulse;
-    led[2] = led_pwm3.pulse;
-    led[3] = led_pwm4.pulse;
-    led_pwm1.update = 1;
-    led_pwm2.update = 1;
-    led_pwm3.update = 1;
-    led_pwm4.update = 1;
+    //debug_pwm1.value = mot[0];
+    //debug_pwm2.value = mot[1];
+    //debug_pwm3.value = mot[2];
+    //debug_pwm4.value = mot[3];
+    //debug[0] = debug_pwm1.pulse;
+    //debug[1] = debug_pwm2.pulse;
+    //debug[2] = debug_pwm3.pulse;
+    //debug[3] = debug_pwm4.pulse;
+    //debug_pwm1.update = 1;
+    //debug_pwm2.update = 1;
+    //debug_pwm3.update = 1;
+    //debug_pwm4.update = 1;
     
     led[4] = signal[0];
     led[5] = signal[1];
@@ -90,5 +93,10 @@ module mojo_top (
     motor[1] = motor2.servo;
     motor[2] = motor3.servo;
     motor[3] = motor4.servo;
+    
+    debug[0] = motor1.servo;
+    debug[1] = motor2.servo;
+    debug[2] = motor3.servo;
+    debug[3] = motor4.servo;
   }
 }
