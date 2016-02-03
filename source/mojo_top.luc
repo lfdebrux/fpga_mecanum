@@ -60,9 +60,9 @@ module mojo_top (
     rotat.servo = sync.out[2];
     throt.servo = sync.out[3];
     
-    motor1.position = forwd.position + sidew.position + rotat.position;
-    motor2.position = forwd.position - sidew.position - rotat.position;
-    motor3.position = forwd.position - sidew.position + rotat.position;
-    motor4.position = forwd.position + sidew.position - rotat.position;
+    motor1.position = forwd.position + sidew.position + rotat.position + $pow(2, 15);
+    motor2.position = forwd.position - sidew.position - rotat.position + $pow(2, 15);
+    motor3.position = forwd.position - sidew.position + rotat.position + $pow(2, 15);
+    motor4.position = forwd.position + sidew.position - rotat.position + $pow(2, 15);
   }
 }
